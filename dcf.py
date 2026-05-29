@@ -3,11 +3,11 @@ import numpy as np
 import pandas as pd
 
 # ── CONFIGURATION ─────────────────────────────────────────────────────────────
-TICKERS = ["QCOM", "AMD", "GOOGL", "BWXT", "CEG", "LULU", "VEEV", "DECK", "ADBE", "NVO", "MELI"]
+TICKERS = ["QCOM", "AMD"]
 
 WACC              = 0.10
 TERMINAL_GROWTH   = 0.025
-PROJECTION_YEARS  = 5
+PROJECTION_YEARS  = 10
 FALLBACK_TAX_RATE = 0.25
 
 # Bear: half the growth, WACC 2% higher
