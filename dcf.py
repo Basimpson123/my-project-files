@@ -34,10 +34,14 @@ SCENARIOS = {
 
 
 def get_row(df, candidates):
+    """Return the candidate row with the most non-null values."""
+    best, best_count = None, -1
     for key in candidates:
         if key in df.index:
-            return df.loc[key]
-    return None
+            count = df.loc[key].notna().sum()
+            if count > best_count:
+                best, best_count = df.loc[key], count
+    return best
 
 
 def fetch_data(symbol):
@@ -54,6 +58,7 @@ def fetch_data(symbol):
 
     da_row    = get_row(cf, ["Depreciation And Amortization",
                               "Depreciation Amortization Depletion",
+                              "Reconciled Depreciation",
                               "Depreciation"])
     capex_row = get_row(cf, ["Capital Expenditure", "Capital Expenditures"])
     wc_row    = get_row(cf, ["Change In Working Capital"])
@@ -61,31 +66,41 @@ def fetch_data(symbol):
     # Diluted shares from income statement (#5)
     diluted_row = get_row(inc, ["Diluted Average Shares", "Diluted Shares"])
 
-    if any(r is None for r in [ebit_row, da_row, capex_row]):
+    if any(r is None for r in [ebit_row, da_row]):
         return None
+    # CapEx is optional — asset-light companies may not report it separately; default to 0
 
-    common_dates = (ebit_row.dropna().index
-                    .intersection(da_row.dropna().index)
-                    .intersection(capex_row.dropna().index))
+    # Index by year string to avoid timestamp metadata mismatches across statements
+    def to_year_dict(row):
+        return {str(d)[:4]: v for d, v in row.dropna().items()}
+
+    ebit_y    = to_year_dict(ebit_row)
+    da_y      = to_year_dict(da_row)
+    capex_y   = to_year_dict(capex_row) if capex_row is not None else {}
+    wc_y      = to_year_dict(wc_row) if wc_row is not None else {}
+    pretax_y  = to_year_dict(pretax_row) if pretax_row is not None else {}
+    tax_y     = to_year_dict(tax_row) if tax_row is not None else {}
+
+    common_years = sorted(set(ebit_y) & set(da_y), reverse=True)
 
     fcff_by_date = {}
     tax_rates    = []
 
-    for date in common_dates:
-        ebit  = ebit_row[date]
-        da    = da_row[date]
-        capex = capex_row[date]
-        wc    = (wc_row[date] if wc_row is not None and date in wc_row.index else 0.0)
+    for year in common_years:
+        ebit  = ebit_y[year]
+        da    = da_y[year]
+        capex = capex_y.get(year, 0.0)
+        wc    = wc_y.get(year, 0.0)
 
-        if pd.isna(ebit) or pd.isna(da) or pd.isna(capex):
+        if pd.isna(ebit) or pd.isna(da):
             continue
         if pd.isna(wc):
             wc = 0.0
 
         try:
-            pretax = pretax_row[date]
-            tax    = tax_row[date]
-            if pd.isna(pretax) or pretax <= 0 or pd.isna(tax) or tax < 0:
+            pretax = pretax_y.get(year)
+            tax    = tax_y.get(year)
+            if pretax is None or tax is None or pd.isna(pretax) or pretax <= 0 or pd.isna(tax) or tax < 0:
                 tax_rate = FALLBACK_TAX_RATE
             else:
                 tax_rate = max(0.0, min(float(tax) / float(pretax), 0.40))
@@ -94,13 +109,13 @@ def fetch_data(symbol):
 
         tax_rates.append(tax_rate)
         nopat = ebit * (1 - tax_rate)
-        fcff_by_date[date] = nopat + da + wc + capex
+        fcff_by_date[year] = nopat + da + wc + capex
 
     if not fcff_by_date:
         return None
 
-    sorted_dates = sorted(fcff_by_date.keys(), reverse=True)
-    fcff_values  = np.array([fcff_by_date[d] for d in sorted_dates])
+    sorted_years = sorted(fcff_by_date.keys(), reverse=True)
+    fcff_values  = np.array([fcff_by_date[y] for y in sorted_years])
 
     cash_row = get_row(bs, ["Cash And Cash Equivalents",
                              "Cash Cash Equivalents And Short Term Investments",
@@ -139,7 +154,7 @@ def fetch_data(symbol):
 
     return {
         "fcff_values":      fcff_values,
-        "dates":            sorted_dates,
+        "dates":            sorted_years,
         "cash":             cash,
         "debt":             debt,
         "shares":           shares,
@@ -220,11 +235,12 @@ def calculate_dcf(data, symbol):
         cagr = (fcff_chron[-1] / fcff_chron[0]) ** (1 / n) - 1
 
     # EWMA-weighted YoY rates — recent years carry more weight (#6)
+    # Use (curr - prev) / abs(prev) so negative-base years get the right sign
     yoy_pairs = []
     for i in range(1, len(fcff_chron)):
         prev, curr = fcff_chron[i - 1], fcff_chron[i]
-        if prev > 0:
-            yoy_pairs.append((i, (curr / prev) - 1))
+        if prev != 0:
+            yoy_pairs.append((i, (curr - prev) / abs(prev)))
 
     ewma_growth = None
     if yoy_pairs:
@@ -267,7 +283,7 @@ def calculate_dcf(data, symbol):
     print(f"{'=' * 60}")
     print(f"  Historical FCFF (most recent first):")
     for date, v in zip(data["dates"], fcff_values):
-        print(f"    {str(date)[:4]}  ${v / 1e9:>8.2f}B")
+        print(f"    {date}  ${v / 1e9:>8.2f}B")
     print(f"\n  Base FCFF            : ${base_fcff / 1e9:.2f}B  ({base_label})")
     print(f"  Base Growth Rate     : {base_growth * 100:.1f}%")
     print(f"  Terminal Growth Rate : {TERMINAL_GROWTH * 100:.1f}%")

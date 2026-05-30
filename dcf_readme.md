@@ -60,8 +60,13 @@ All tunable parameters live at the top of the file.
    This is correct — not a bug — because of how Yahoo Finance reports the numbers:
    - **CapEx** is returned as a **negative value** (it is a cash outflow), so adding it is equivalent to subtracting a positive capital expenditure.
    - **Change in Working Capital (`wc`)** is also sign-adjusted by Yahoo Finance — an increase in working capital (cash consumed) comes through as negative, so adding it again matches the textbook subtraction.
+   - **CapEx is optional** — asset-light companies (e.g. SaaS) often do not report a separate CapEx line. When the row is absent it defaults to 0, which is appropriate for businesses with negligible physical capital spending.
 
    `fetch_data()` also collects beta, market cap, interest expense, diluted shares, and average effective tax rate for use in WACC computation.
+
+   **Data-fetching robustness:**
+   - Row labels vary across companies and yfinance versions. `get_row()` tries all candidate label names and returns whichever has the **most non-null values**, rather than stopping at the first match. This prevents a sparsely-populated label from shadowing a better one (e.g. Google's D&A appears under both `Depreciation And Amortization` and `Reconciled Depreciation`).
+   - Year matching uses **year strings** (`"2024"`) rather than exact pandas timestamps. This avoids silent intersection failures caused by timestamp metadata differences between the income statement and cash flow statement — a known yfinance quirk.
 
 2. **WACC** — `compute_wacc()` derives a per-ticker WACC from fundamentals rather than using a single hardcoded rate:
 
@@ -77,7 +82,7 @@ All tunable parameters live at the top of the file.
 
 3. **Growth Rate** — `calculate_dcf()` derives a base growth rate by blending two methods:
    - **CAGR** (geometric mean): `(Most Recent FCFF / Oldest FCFF)^(1/n) − 1` — used when both endpoints are positive.
-   - **EWMA-weighted YoY rates**: year-over-year growth rates weighted exponentially so that recent years carry more influence (`EWMA_DECAY = 0.85` per year going backward).
+   - **EWMA-weighted YoY rates**: year-over-year growth rates weighted exponentially so that recent years carry more influence (`EWMA_DECAY = 0.85` per year going backward). Growth is computed as `(curr − prev) / |prev|` rather than `curr/prev − 1` so that years with negative FCFF (e.g. capital-intensive utilities mid-cycle) still produce a correctly-signed rate.
 
    When both are available they are blended 50/50. The result is capped between −5% and +30%.
 
