@@ -42,6 +42,7 @@ The ND/EBITDA and interest coverage filters are treated as hard disqualifiers:
 | Column | Description |
 |---|---|
 | Ticker | Stock symbol |
+| Company | Full company name |
 | Industry | Yahoo Finance industry classification |
 | Market Cap ($B) | Market capitalisation in billions |
 | P/E | Trailing twelve-month P/E ratio |

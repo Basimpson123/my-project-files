@@ -115,6 +115,7 @@ def check_stock(ticker: str) -> dict | None:
 
     return {
         "Ticker":           ticker,
+        "Company":          info.get("longName", ""),
         "Industry":         info.get("industry", "Unknown"),
         "Market Cap ($B)":  round(market_cap / 1e9, 2),
         "P/E":              round(pe, 1),
