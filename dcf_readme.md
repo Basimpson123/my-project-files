@@ -150,4 +150,19 @@ Edit `TICKERS` at the top of the file to change which stocks are analyzed.
   Intrinsic Value         $118.20     $201.45     $352.87
   Upside / (Downside)     -28.5%      +21.9%     +113.5%
   ========================================================
+
+... (repeated for each ticker) ...
+
+
+============================================================
+  Summary: Upside / (Downside) by Scenario
+============================================================
+  Ticker          Bear        Base        Bull
+  ------------------------------------------
+  QCOM          -28.5%      +21.9%     +113.5%
+  AMD           -15.2%      +34.7%      +98.3%
+  ...
+  ==========================================
 ```
+
+The summary table is printed after all individual analyses and lists every ticker's Bear/Base/Bull upside or downside in one place for quick comparison. Tickers that fail to fetch data are omitted from the summary (they print an error inline).

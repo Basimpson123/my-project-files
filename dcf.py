@@ -315,22 +315,44 @@ def calculate_dcf(data, symbol):
     print(f"  {'Intrinsic Value':<22}" + "".join(
         f"${iv:>{col-1}.2f}" if iv is not None else f"{'N/A':>{col}}" for iv in values
     ))
+    upsides = []
     if current_price:
         print(f"  {'Upside / (Downside)':<22}" + "".join(
             f"{((iv / current_price) - 1) * 100:>+{col-1}.1f}%" if iv is not None else f"{'N/A':>{col}}"
             for iv in values
         ))
+        upsides = [((iv / current_price) - 1) * 100 if iv is not None else None for iv in values]
     print(f"  {'=' * (22 + col * len(names))}")
+    return {"symbol": symbol, "upsides": upsides}
 
 
 def main():
+    summary = []
     for symbol in TICKERS:
         print(f"\nFetching data for {symbol}...")
         data = fetch_data(symbol)
         if data is None:
             print(f"{symbol}: Could not retrieve financial data.")
             continue
-        calculate_dcf(data, symbol)
+        result = calculate_dcf(data, symbol)
+        if result:
+            summary.append(result)
+
+    if summary:
+        names = list(SCENARIOS.keys())
+        col   = 12
+        print(f"\n\n{'=' * 60}")
+        print(f"  Summary: Upside / (Downside) by Scenario")
+        print(f"{'=' * 60}")
+        print(f"  {'Ticker':<10}" + "".join(f"{n:>{col}}" for n in names))
+        print(f"  {'-' * (10 + col * len(names))}")
+        for row in summary:
+            ups = row["upsides"]
+            line = f"  {row['symbol']:<10}"
+            for u in ups:
+                line += f"{u:>+{col-1}.1f}%" if u is not None else f"{'N/A':>{col}}"
+            print(line)
+        print(f"  {'=' * (10 + col * len(names))}")
 
 
 if __name__ == "__main__":
