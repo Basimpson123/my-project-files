@@ -11,10 +11,26 @@ All tunable parameters live at the top of the file.
 | Variable | Default | Description |
 |---|---|---|
 | `TICKERS` | 11 symbols | List of stock tickers to analyze |
-| `WACC` | 10% | Base weighted average cost of capital |
 | `TERMINAL_GROWTH` | 2.5% | Perpetual growth rate used in terminal value |
 | `PROJECTION_YEARS` | 5 | Number of years to project free cash flow |
 | `FALLBACK_TAX_RATE` | 25% | Used when reported tax data is missing or invalid |
+| `FALLBACK_WACC` | 10% | Used when WACC cannot be computed from fundamentals |
+
+### WACC Components
+
+| Variable | Default | Description |
+|---|---|---|
+| `RISK_FREE_RATE` | 4.1% | Fernandez 2026 survey (97 countries) — alternative: 4.3% (~10-year Treasury yield) |
+| `EQUITY_RISK_PREMIUM` | 5.3% | Fernandez 2026 survey (97 countries) — alternative: 5.5% (Damodaran implied ERP) |
+| `FALLBACK_BETA` | 1.0 | Used when beta is unavailable |
+| `FALLBACK_COST_OF_DEBT` | 5.0% | Used when interest expense data is missing |
+
+### Growth Rate / Base FCFF
+
+| Variable | Default | Description |
+|---|---|---|
+| `EWMA_DECAY` | 0.85 | Exponential weight decay per year going backward |
+| `NORMALIZE_YEARS` | 3 | Years averaged to produce the base FCFF |
 
 ### Scenarios
 
@@ -45,13 +61,35 @@ All tunable parameters live at the top of the file.
    - **CapEx** is returned as a **negative value** (it is a cash outflow), so adding it is equivalent to subtracting a positive capital expenditure.
    - **Change in Working Capital (`wc`)** is also sign-adjusted by Yahoo Finance — an increase in working capital (cash consumed) comes through as negative, so adding it again matches the textbook subtraction.
 
-   The net result is identical to the standard formula; the signs are just already baked into the raw data.
+   `fetch_data()` also collects beta, market cap, interest expense, diluted shares, and average effective tax rate for use in WACC computation.
 
-2. **Growth Rate** — `calculate_dcf()` derives a base growth rate from the year-over-year FCFF history, capped between −5% and +30%.
+2. **WACC** — `compute_wacc()` derives a per-ticker WACC from fundamentals rather than using a single hardcoded rate:
 
-3. **DCF** — `run_dcf()` projects FCFF forward for `PROJECTION_YEARS`, discounts each year at `WACC`, adds a Gordon Growth terminal value, and converts enterprise value to per-share intrinsic value using net cash and shares outstanding.
+   ```
+   Cost of Equity  = Risk-Free Rate + Beta × Equity Risk Premium   (CAPM)
+   Cost of Debt    = Interest Expense / Total Debt  (capped at 15%)
+   After-Tax CoD   = Cost of Debt × (1 − Effective Tax Rate)
+   WACC            = (Market Cap / Total Capital) × CoE
+                   + (Debt / Total Capital) × After-Tax CoD
+   ```
 
-4. **Output** — Prints a scenario table per ticker showing growth rate, WACC, intrinsic value, and upside/downside vs. current price.
+   Result is clamped to [5%, 20%]. Falls back to `FALLBACK_WACC` if capital structure data is unavailable.
+
+3. **Growth Rate** — `calculate_dcf()` derives a base growth rate by blending two methods:
+   - **CAGR** (geometric mean): `(Most Recent FCFF / Oldest FCFF)^(1/n) − 1` — used when both endpoints are positive.
+   - **EWMA-weighted YoY rates**: year-over-year growth rates weighted exponentially so that recent years carry more influence (`EWMA_DECAY = 0.85` per year going backward).
+
+   When both are available they are blended 50/50. The result is capped between −5% and +30%.
+
+4. **Normalized Base FCFF** — The starting FCFF is chosen adaptively:
+   - If FCFF grew every year within the `NORMALIZE_YEARS` window (consistent growth), the most recent year is used directly — averaging would only pull it down.
+   - If there was any down year within that window (volatile history), the model averages the most recent `NORMALIZE_YEARS` (default 3) years to smooth out one-time anomalies.
+
+5. **DCF** — `run_dcf()` uses a **two-stage growth model**: growth fades linearly from the derived base rate in year 1 down to `TERMINAL_GROWTH` by the final projection year, rather than projecting at a flat rate and cliff-dropping to the terminal assumption. Each year's FCF is discounted at the scenario WACC. A Gordon Growth terminal value is appended at year `PROJECTION_YEARS` and enterprise value is converted to per-share intrinsic value using net cash and diluted shares outstanding.
+
+6. **Diluted Shares** — `fetch_data()` first tries to read `Diluted Average Shares` from the income statement, which captures stock-based compensation dilution. It falls back to `sharesOutstanding` from `ticker.info` if unavailable.
+
+7. **Output** — Prints a scenario table per ticker showing growth rate, WACC, intrinsic value, and upside/downside vs. current price.
 
 ---
 
@@ -92,16 +130,19 @@ Edit `TICKERS` at the top of the file to change which stocks are analyzed.
     2023  $    3.88B
     ...
 
+  Normalized Base FCFF :  $4.50B  (3-yr avg)
   Base Growth Rate     : 14.2%
   Terminal Growth Rate : 2.5%
-  Projection Period    : 5 years
+  Projection Period    : 5 years  (two-stage fade)
+  Beta                 : 1.15
+  Computed WACC        : 9.3%
   Current Price        : $165.30
 
                               Bear        Base        Bull
   --------------------------------------------------------
   Growth Rate               7.1%       14.2%       21.3%
-  WACC                     12.0%       10.0%        8.0%
-  Intrinsic Value         $112.45     $198.72     $341.09
-  Upside / (Downside)     -32.0%      +20.2%     +106.3%
+  WACC                     11.3%        9.3%        7.3%
+  Intrinsic Value         $118.20     $201.45     $352.87
+  Upside / (Downside)     -28.5%      +21.9%     +113.5%
   ========================================================
 ```
