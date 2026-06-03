@@ -40,7 +40,7 @@ def _color_pct(pct, width=10):
 
 # ── config ────────────────────────────────────────────────────────────────────
 
-TICKERS = ["QCOM", "AMD", "GOOGL", "BWXT", "CEG", "LULU", "VEEV", "DECK", "ADBE", "NVO", "MELI"]
+TICKERS = ["QCOM", "AMD", "GOOGL", "BWXT", "CEG", "LHX", "LULU", "VEEV", "DECK", "ADBE", "NVO", "MELI"]
 TICKER_SET = set(TICKERS)
 PEER_LIMIT = 10
 MULT_FIELDS = ["pe", "forward_pe", "ev_ebitda", "ev_revenue", "pfcf", "peg"]
