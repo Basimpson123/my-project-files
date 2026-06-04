@@ -30,17 +30,28 @@ SCENARIOS = {
     "Base": {"growth_mult": 1.0,  "wacc_adj":  0.00},
     "Bull": {"growth_mult": 1.5,  "wacc_adj": -0.02},
 }
+
+DEBUG = False   # when True, log the label get_row() selected for each field
+
+# How to treat stock-based compensation in FCFF:
+#   "expense"  -> SBC is a real cost; NOT added back. Conservative; matches the textbook
+#                 EBIT-based buildup the tool already does. RECOMMENDED for strict valuation.
+#   "addback"  -> add SBC back to FCFF, matching street/OCF-based reported FCF.
+#   "both"     -> compute and print both, so the spread is visible per ticker.
+SBC_TREATMENT = "both"
 # ─────────────────────────────────────────────────────────────────────────────
 
 
-def get_row(df, candidates):
+def get_row(df, candidates, field_name=""):
     """Return the candidate row with the most non-null values."""
-    best, best_count = None, -1
+    best, best_count, chosen_label = None, -1, None
     for key in candidates:
         if key in df.index:
             count = df.loc[key].notna().sum()
             if count > best_count:
-                best, best_count = df.loc[key], count
+                best, best_count, chosen_label = df.loc[key], count, key
+    if DEBUG and chosen_label:
+        print(f"  [get_row] {field_name}: selected '{chosen_label}' ({best_count} non-null)")
     return best
 
 
@@ -51,20 +62,25 @@ def fetch_data(symbol):
     inc = ticker.income_stmt if hasattr(ticker, "income_stmt") else ticker.financials
     bs  = ticker.balance_sheet
 
-    ebit_row    = get_row(inc, ["EBIT", "Ebit", "Operating Income"])
-    tax_row     = get_row(inc, ["Tax Provision", "Income Tax Expense"])
-    pretax_row  = get_row(inc, ["Pretax Income", "Income Before Tax"])
-    int_exp_row = get_row(inc, ["Interest Expense", "Interest Expense Non Operating"])
+    ebit_row    = get_row(inc, ["EBIT", "Ebit", "Operating Income"], "EBIT")
+    tax_row     = get_row(inc, ["Tax Provision", "Income Tax Expense"], "Tax")
+    pretax_row  = get_row(inc, ["Pretax Income", "Income Before Tax"], "Pretax Income")
+    int_exp_row = get_row(inc, ["Interest Expense", "Interest Expense Non Operating"], "Interest Expense")
 
     da_row    = get_row(cf, ["Depreciation And Amortization",
                               "Depreciation Amortization Depletion",
                               "Reconciled Depreciation",
-                              "Depreciation"])
-    capex_row = get_row(cf, ["Capital Expenditure", "Capital Expenditures"])
-    wc_row    = get_row(cf, ["Change In Working Capital"])
+                              "Depreciation"], "D&A")
+    capex_row = get_row(cf, ["Capital Expenditure", "Capital Expenditures"], "CapEx")
+    wc_row    = get_row(cf, ["Change In Working Capital"], "WC Change")
+    sbc_row   = get_row(cf, ["Stock Based Compensation",
+                              "Share Based Compensation",
+                              "StockBasedCompensation"], "SBC")
+    ocf_row   = get_row(cf, ["Operating Cash Flow",
+                              "Cash Flowsfromusedin Operating Activities Direct"], "OCF")
 
     # Diluted shares from income statement (#5)
-    diluted_row = get_row(inc, ["Diluted Average Shares", "Diluted Shares"])
+    diluted_row = get_row(inc, ["Diluted Average Shares", "Diluted Shares"], "Diluted Shares")
 
     if any(r is None for r in [ebit_row, da_row]):
         return None
@@ -80,22 +96,29 @@ def fetch_data(symbol):
     wc_y      = to_year_dict(wc_row) if wc_row is not None else {}
     pretax_y  = to_year_dict(pretax_row) if pretax_row is not None else {}
     tax_y     = to_year_dict(tax_row) if tax_row is not None else {}
+    sbc_y     = to_year_dict(sbc_row) if sbc_row is not None else {}
+    ocf_y     = to_year_dict(ocf_row) if ocf_row is not None else {}
 
     common_years = sorted(set(ebit_y) & set(da_y), reverse=True)
 
-    fcff_by_date = {}
-    tax_rates    = []
+    fcff_expense_by_date = {}
+    fcff_addback_by_date = {}
+    tax_rates            = []
 
     for year in common_years:
         ebit  = ebit_y[year]
         da    = da_y[year]
         capex = capex_y.get(year, 0.0)
         wc    = wc_y.get(year, 0.0)
+        sbc   = sbc_y.get(year, 0.0)
+        ocf   = ocf_y.get(year, 0.0)
 
         if pd.isna(ebit) or pd.isna(da):
             continue
         if pd.isna(wc):
             wc = 0.0
+        if pd.isna(sbc):
+            sbc = 0.0
 
         try:
             pretax = pretax_y.get(year)
@@ -108,21 +131,35 @@ def fetch_data(symbol):
             tax_rate = FALLBACK_TAX_RATE
 
         tax_rates.append(tax_rate)
-        nopat = ebit * (1 - tax_rate)
-        fcff_by_date[year] = nopat + da + wc + capex
+        nopat        = ebit * (1 - tax_rate)
+        fcff_expense = nopat + da + wc + capex
+        fcff_addback = fcff_expense + sbc
 
-    if not fcff_by_date:
+        # Reconciliation: warn when tool's FCFF diverges >25% from street OCF−CapEx.
+        # A consistent gap signals an SBC or deferred-revenue definitional mismatch.
+        if ocf != 0.0:
+            ocf_minus_capex = ocf + capex  # capex is negative per yfinance convention
+            if ocf_minus_capex != 0 and abs(fcff_expense - ocf_minus_capex) > 0.25 * abs(ocf_minus_capex):
+                print(f"  [WARN] {symbol} {year}: FCFF ({fcff_expense/1e9:.2f}B) diverges "
+                      f">25% from OCF−CapEx ({ocf_minus_capex/1e9:.2f}B) — "
+                      f"likely SBC/deferred-revenue definitional gap.")
+
+        fcff_expense_by_date[year] = fcff_expense
+        fcff_addback_by_date[year] = fcff_addback
+
+    if not fcff_expense_by_date:
         return None
 
-    sorted_years = sorted(fcff_by_date.keys(), reverse=True)
-    fcff_values  = np.array([fcff_by_date[y] for y in sorted_years])
+    sorted_years        = sorted(fcff_expense_by_date.keys(), reverse=True)
+    fcff_expense_values = np.array([fcff_expense_by_date[y] for y in sorted_years])
+    fcff_addback_values = np.array([fcff_addback_by_date[y] for y in sorted_years])
 
     cash_row = get_row(bs, ["Cash And Cash Equivalents",
                              "Cash Cash Equivalents And Short Term Investments",
-                             "Cash"])
+                             "Cash"], "Cash")
     debt_row = get_row(bs, ["Total Debt",
                              "Long Term Debt And Capital Lease Obligation",
-                             "Long Term Debt"])
+                             "Long Term Debt"], "Debt")
 
     cash = float(cash_row.iloc[0]) if cash_row is not None else 0.0
     debt = float(debt_row.iloc[0]) if debt_row is not None else 0.0
@@ -153,16 +190,17 @@ def fetch_data(symbol):
     avg_tax_rate = float(np.mean(tax_rates)) if tax_rates else FALLBACK_TAX_RATE
 
     return {
-        "fcff_values":      fcff_values,
-        "dates":            sorted_years,
-        "cash":             cash,
-        "debt":             debt,
-        "shares":           shares,
-        "price":            price,
-        "beta":             beta,
-        "market_cap":       market_cap,
-        "interest_expense": interest_expense,
-        "avg_tax_rate":     avg_tax_rate,
+        "fcff_expense_values": fcff_expense_values,
+        "fcff_addback_values": fcff_addback_values,
+        "dates":               sorted_years,
+        "cash":                cash,
+        "debt":                debt,
+        "shares":              shares,
+        "price":               price,
+        "beta":                beta,
+        "market_cap":          market_cap,
+        "interest_expense":    interest_expense,
+        "avg_tax_rate":        avg_tax_rate,
     }
 
 
@@ -219,8 +257,9 @@ def run_dcf(base_fcff, cash, debt, shares, growth_rate, wacc):
     return equity_value / shares
 
 
-def calculate_dcf(data, symbol):
-    fcff_values = data["fcff_values"]
+def calculate_dcf(data, symbol, fcff_values=None, label_suffix=""):
+    if fcff_values is None:
+        fcff_values = data["fcff_expense_values"]
 
     if len(fcff_values) < 2:
         print(f"{symbol}: Not enough FCFF history.")
@@ -278,8 +317,9 @@ def calculate_dcf(data, symbol):
     base_wacc     = compute_wacc(data)
     current_price = data["price"]
 
+    suffix_str = f" [{label_suffix}]" if label_suffix else ""
     print(f"\n{'=' * 60}")
-    print(f"  DCF Analysis (FCFF): {symbol}")
+    print(f"  DCF Analysis (FCFF): {symbol}{suffix_str}")
     print(f"{'=' * 60}")
     print(f"  Historical FCFF (most recent first):")
     for date, v in zip(data["dates"], fcff_values):
@@ -334,9 +374,17 @@ def main():
         if data is None:
             print(f"{symbol}: Could not retrieve financial data.")
             continue
-        result = calculate_dcf(data, symbol)
-        if result:
-            summary.append(result)
+        if SBC_TREATMENT == "both":
+            r1 = calculate_dcf(data, symbol, data["fcff_expense_values"], "SBC as Expense")
+            r2 = calculate_dcf(data, symbol, data["fcff_addback_values"], "SBC as Add-back")
+            if r1: summary.append({**r1, "symbol": symbol + " (E)"})
+            if r2: summary.append({**r2, "symbol": symbol + " (A)"})
+        elif SBC_TREATMENT == "addback":
+            result = calculate_dcf(data, symbol, data["fcff_addback_values"])
+            if result: summary.append(result)
+        else:  # "expense" (default conservative)
+            result = calculate_dcf(data, symbol, data["fcff_expense_values"])
+            if result: summary.append(result)
 
     if summary:
         names = list(SCENARIOS.keys())

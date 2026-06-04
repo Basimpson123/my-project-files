@@ -10,11 +10,13 @@ All tunable parameters live at the top of the file.
 
 | Variable | Default | Description |
 |---|---|---|
-| `TICKERS` | 11 symbols | List of stock tickers to analyze |
+| `TICKERS` | 12 symbols | List of stock tickers to analyze |
 | `TERMINAL_GROWTH` | 2.5% | Perpetual growth rate used in terminal value |
 | `PROJECTION_YEARS` | 5 | Number of years to project free cash flow |
 | `FALLBACK_TAX_RATE` | 25% | Used when reported tax data is missing or invalid |
 | `FALLBACK_WACC` | 10% | Used when WACC cannot be computed from fundamentals |
+| `DEBUG` | `False` | When `True`, prints which label `get_row()` selected for every field |
+| `SBC_TREATMENT` | `"both"` | Controls how stock-based compensation is handled — see below |
 
 ### WACC Components
 
@@ -24,6 +26,20 @@ All tunable parameters live at the top of the file.
 | `EQUITY_RISK_PREMIUM` | 5.3% | Fernandez 2026 survey (97 countries) — alternative: 5.5% (Damodaran implied ERP) |
 | `FALLBACK_BETA` | 1.0 | Used when beta is unavailable |
 | `FALLBACK_COST_OF_DEBT` | 5.0% | Used when interest expense data is missing |
+
+### SBC Treatment
+
+`SBC_TREATMENT` controls how stock-based compensation is incorporated into FCFF. This matters
+because the tool's textbook EBIT-based buildup starts from EBIT (which is computed *after* the
+SBC expense) and never adds it back — making the result ~$400–500M/yr lower than the
+street-reported "OCF − CapEx" figure for heavy-SBC companies (e.g. VEEV, ADBE). Neither figure
+is wrong; they answer different questions. The flag makes the choice explicit.
+
+| Value | Behavior |
+|---|---|
+| `"expense"` | SBC treated as a real economic cost. Conservative; matches the textbook buildup. Recommended for strict valuation. |
+| `"addback"` | SBC added back to FCFF. Matches street/OCF-based reported FCF numbers. |
+| `"both"` | Runs and prints both treatments per ticker. The spread between them is the visible cost of SBC. |
 
 ### Growth Rate / Base FCFF
 
@@ -54,18 +70,27 @@ All tunable parameters live at the top of the file.
 
    **In code, all terms are added:**
    ```python
-   fcff = nopat + da + wc + capex
+   fcff_expense = nopat + da + wc + capex
+   fcff_addback = fcff_expense + sbc
    ```
 
-   This is correct — not a bug — because of how Yahoo Finance reports the numbers:
+   The sign conventions are correct — not bugs — because of how Yahoo Finance reports the numbers:
    - **CapEx** is returned as a **negative value** (it is a cash outflow), so adding it is equivalent to subtracting a positive capital expenditure.
    - **Change in Working Capital (`wc`)** is also sign-adjusted by Yahoo Finance — an increase in working capital (cash consumed) comes through as negative, so adding it again matches the textbook subtraction.
    - **CapEx is optional** — asset-light companies (e.g. SaaS) often do not report a separate CapEx line. When the row is absent it defaults to 0, which is appropriate for businesses with negligible physical capital spending.
+   - **SBC** (`sbc`) is fetched from the cash flow statement (`Stock Based Compensation` / `Share Based Compensation`). Whether it is added to FCFF is governed by `SBC_TREATMENT` (see Configuration).
 
-   `fetch_data()` also collects beta, market cap, interest expense, diluted shares, and average effective tax rate for use in WACC computation.
+   `fetch_data()` also collects operating cash flow (for the reconciliation check), beta, market cap, interest expense, diluted shares, and average effective tax rate.
+
+   **Reconciliation warning:** After computing `fcff_expense` for each year, the tool independently computes `OCF − CapEx` and prints a `[WARN]` line if the two figures diverge by more than 25%. A consistent gap across all historical years is the signature of a definitional mismatch (typically SBC or deferred revenue) rather than a one-off data glitch.
+
+   ```
+   [WARN] VEEV 2024: FCFF (0.64B) diverges >25% from OCF−CapEx (1.42B) — likely SBC/deferred-revenue definitional gap.
+   ```
 
    **Data-fetching robustness:**
    - Row labels vary across companies and yfinance versions. `get_row()` tries all candidate label names and returns whichever has the **most non-null values**, rather than stopping at the first match. This prevents a sparsely-populated label from shadowing a better one (e.g. Google's D&A appears under both `Depreciation And Amortization` and `Reconciled Depreciation`).
+   - When `DEBUG = True`, `get_row()` prints the winning label and its non-null count for every field, making it easy to audit which series was selected without re-running with breakpoints.
    - Year matching uses **year strings** (`"2024"`) rather than exact pandas timestamps. This avoids silent intersection failures caused by timestamp metadata differences between the income statement and cash flow statement — a known yfinance quirk.
 
 2. **WACC** — `compute_wacc()` derives a per-ticker WACC from fundamentals rather than using a single hardcoded rate:
@@ -126,29 +151,44 @@ Edit `TICKERS` at the top of the file to change which stocks are analyzed.
 
 ## Output Example
 
+With `SBC_TREATMENT = "both"` (default), each ticker prints two blocks back-to-back — one for each treatment — followed by a combined summary table. Any year where the tool's FCFF diverges >25% from `OCF − CapEx` prints a `[WARN]` line during the fetch phase, before the analysis blocks.
+
 ```
+Fetching data for VEEV...
+  [WARN] VEEV 2024: FCFF (0.64B) diverges >25% from OCF−CapEx (1.42B) — likely SBC/deferred-revenue definitional gap.
+  [WARN] VEEV 2023: FCFF (0.49B) diverges >25% from OCF−CapEx (1.07B) — likely SBC/deferred-revenue definitional gap.
+  ...
+
 ============================================================
-  DCF Analysis (FCFF): QCOM
+  DCF Analysis (FCFF): VEEV [SBC as Expense]
 ============================================================
   Historical FCFF (most recent first):
-    2024  $    5.12B
-    2023  $    3.88B
+    2024  $    0.64B
+    2023  $    0.49B
     ...
 
-  Normalized Base FCFF :  $4.50B  (3-yr avg)
-  Base Growth Rate     : 14.2%
-  Terminal Growth Rate : 2.5%
-  Projection Period    : 5 years  (two-stage fade)
-  Beta                 : 1.15
-  Computed WACC        : 9.3%
-  Current Price        : $165.30
-
+  Base FCFF            : $0.57B  (3-yr avg)
+  ...
                               Bear        Base        Bull
   --------------------------------------------------------
-  Growth Rate               7.1%       14.2%       21.3%
-  WACC                     11.3%        9.3%        7.3%
-  Intrinsic Value         $118.20     $201.45     $352.87
-  Upside / (Downside)     -28.5%      +21.9%     +113.5%
+  Intrinsic Value          $58.10      $99.40     $172.60
+  Upside / (Downside)      -67.1%      -43.6%       -2.0%
+  ========================================================
+
+============================================================
+  DCF Analysis (FCFF): VEEV [SBC as Add-back]
+============================================================
+  Historical FCFF (most recent first):
+    2024  $    1.42B
+    2023  $    1.07B
+    ...
+
+  Base FCFF            : $1.25B  (3-yr avg)
+  ...
+                              Bear        Base        Bull
+  --------------------------------------------------------
+  Intrinsic Value         $127.80     $218.50     $378.90
+  Upside / (Downside)      -27.5%      +24.3%     +115.4%
   ========================================================
 
 ... (repeated for each ticker) ...
@@ -159,10 +199,14 @@ Edit `TICKERS` at the top of the file to change which stocks are analyzed.
 ============================================================
   Ticker          Bear        Base        Bull
   ------------------------------------------
-  QCOM          -28.5%      +21.9%     +113.5%
-  AMD           -15.2%      +34.7%      +98.3%
+  QCOM (E)      -28.5%      +21.9%     +113.5%
+  QCOM (A)      -18.2%      +38.4%     +134.7%
+  VEEV (E)      -67.1%      -43.6%       -2.0%
+  VEEV (A)      -27.5%      +24.3%     +115.4%
   ...
   ==========================================
 ```
 
-The summary table is printed after all individual analyses and lists every ticker's Bear/Base/Bull upside or downside in one place for quick comparison. Tickers that fail to fetch data are omitted from the summary (they print an error inline).
+`(E)` = SBC as Expense (conservative), `(A)` = SBC as Add-back (street FCF). The spread between the two rows for any ticker is the visible economic cost of its SBC program.
+
+With `SBC_TREATMENT = "expense"` or `"addback"`, only one block prints per ticker and summary rows use the bare ticker symbol. Tickers that fail to fetch data are omitted from the summary (they print an error inline).
