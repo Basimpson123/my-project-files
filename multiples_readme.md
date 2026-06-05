@@ -22,7 +22,7 @@ Pulls the following for each ticker using `yfinance`:
 | Earnings growth | `info["earningsGrowth"]` |
 | Net debt | derived: `enterpriseValue - marketCap` |
 
-**Current watchlist:** `QCOM, AMD, GOOGL, BWXT, CEG, LHX, LULU, VEEV, DECK, ADBE, NVO, MELI`
+**Current watchlist:** `QCOM, AMD, GOOGL, BWXT, CEG, LHX, VEEV, DECK, ADBE, MELI`
 
 ### 2. Build Industry Peer Groups
 For each unique industry in the watchlist, calls `yf.Industry(key).top_companies`. Excludes watchlist tickers and takes up to **10 peers** per industry (up from 5 previously).
