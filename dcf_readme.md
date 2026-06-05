@@ -10,7 +10,7 @@ All tunable parameters live at the top of the file.
 
 | Variable | Default | Description |
 |---|---|---|
-| `TICKERS` | 12 symbols | List of stock tickers to analyze |
+| `TICKERS` | 10 symbols | List of stock tickers to analyze |
 | `TERMINAL_GROWTH` | 2.5% | Perpetual growth rate used in terminal value |
 | `PROJECTION_YEARS` | 5 | Number of years to project free cash flow |
 | `FALLBACK_TAX_RATE` | 25% | Used when reported tax data is missing or invalid |
