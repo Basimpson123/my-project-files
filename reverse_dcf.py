@@ -3,7 +3,7 @@ import numpy as np
 import yfinance as yf
 
 # ── CONFIGURATION ─────────────────────────────────────────────────────────────
-TICKERS = ["AVGO", "QCOM"]
+TICKERS = ["AVGO", "QCOM", "GOOGL"]
 
 # Per-ticker overrides — any key set here takes precedence over auto-fetch.
 # Example: OVERRIDES = {"AVGO": {"EBIT_MARGIN": 0.55}, "QCOM": {"WACC": 0.09}}
