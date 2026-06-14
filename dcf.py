@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 
 # ── CONFIGURATION ─────────────────────────────────────────────────────────────
-TICKERS = ["QCOM", "AMD", "GOOGL", "BWXT", "CEG", "LHX", "AVGO", "VEEV", "DECK", "ADBE", "MELI", "MSFT"]
+TICKERS = ["MELI", "MSFT"]
 
 TERMINAL_GROWTH       = 0.025
 PROJECTION_YEARS      = 5
