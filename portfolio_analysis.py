@@ -36,7 +36,7 @@ DEFAULT_PORTFOLIO = {
     "benchmark": "SPY",
     "lookback": "3y",          # yfinance period string: 1y, 2y, 3y, 5y, 10y
     "frequency": "daily",      # "daily" or "monthly"
-    "risk_free_rate": 0.04,    # annual decimal, e.g. 0.04 = 4%
+    "risk_free_rate": 0.041,   # 4.1% — Pablo Fernandez survey of 54 countries, 2025
 }
 # ---------------------------------------------------------------------------
 

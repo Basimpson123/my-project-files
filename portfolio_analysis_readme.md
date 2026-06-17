@@ -52,7 +52,7 @@ DEFAULT_PORTFOLIO = {
     "benchmark": "SPY",
     "lookback": "3y",         # yfinance period string: 1y, 2y, 3y, 5y, 10y
     "frequency": "daily",     # "daily" or "monthly"
-    "risk_free_rate": 0.04,   # annual decimal, e.g. 0.04 = 4%
+    "risk_free_rate": 0.041,  # 4.1% — Pablo Fernandez survey of 54 countries, 2025
 }
 ```
 
@@ -215,6 +215,7 @@ All files are written to the script's own directory (`my-project-files/`) using 
 - **Adj Close / `auto_adjust=True`**: Uses the `"Close"` column after yfinance auto-adjusts for splits and dividends, so return calculations are economically accurate.
 - **Benchmark handled separately**: The benchmark ticker is downloaded in the same batch as holdings but split off before `compute_returns()` so it never enters the weight vector or holding-return DataFrame.
 - **Renormalization on missing tickers**: Rather than hard-failing, dropped tickers cause weights to be rescaled so the math still works. A warning is always printed.
+- **Risk-free rate source**: Default is 4.1% (0.041), taken from the Pablo Fernandez survey of 54 countries (2025). Can be overridden per-run via the `risk_free_rate` key in a JSON config file.
 - **Per-period risk-free conversion**: The annual rate is compounded down to match return frequency; it is not simply divided by 252 or 12.
 - **Sortino denominator**: Only periods where excess return (return minus rf) is negative enter the downside deviation calculation — consistent with the standard definition.
 - **Capture ratios**: Computed as mean-return ratios (not cumulative product ratios) for simplicity and robustness on short windows.
