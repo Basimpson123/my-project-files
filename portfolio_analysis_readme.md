@@ -169,12 +169,12 @@ Formats and prints a console report with four sections:
 Percentages are formatted with `:.2%`; ratios with 4 decimal places. Uses the internal `_fmt()` helper.
 
 ### `save_outputs(r_metrics, b_metrics, d_metrics, corr_matrix)`
-Writes two files to the **current working directory**:
+Writes two files to the **same directory as the script** (`Path(__file__).parent`), regardless of where the command is run from:
 - `portfolio_metrics.csv` — all metrics merged into a single `Metric / Value` CSV
 - `portfolio_correlation.csv` — the full correlation matrix
 
 ### `plot_cumulative(port_rets, bench_rets, benchmark)`
-Only called when `--plot` is passed. Computes `(1+r).cumprod()` for both series, plots them on a shared axis, saves `portfolio_cumulative.png` (150 dpi), and calls `plt.show()`. Gracefully skips if matplotlib is not installed.
+Only called when `--plot` is passed. Computes `(1+r).cumprod()` for both series, plots them on a shared axis, saves `portfolio_cumulative.png` (150 dpi) to the **same directory as the script**, and calls `plt.show()`. Gracefully skips if matplotlib is not installed.
 
 ---
 
@@ -206,7 +206,7 @@ plot_cumulative(...)   ← only if --plot and benchmark available
 | `portfolio_correlation.csv` | N×N correlation matrix of holdings | Yes |
 | `portfolio_cumulative.png` | Cumulative return chart | Only with `--plot` |
 
-Files are written to whatever directory the script is run from.
+All files are written to the script's own directory (`my-project-files/`) using `Path(__file__).parent`, so they always land in the same place regardless of where you run the command from.
 
 ---
 

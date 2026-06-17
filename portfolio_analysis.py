@@ -310,12 +310,13 @@ def save_outputs(
     metrics_df = pd.DataFrame.from_dict(
         all_metrics, orient="index", columns=["Value"]
     )
+    out_dir = Path(__file__).parent
     metrics_df.index.name = "Metric"
-    metrics_df.to_csv("portfolio_metrics.csv")
-    print("  Saved: portfolio_metrics.csv")
+    metrics_df.to_csv(out_dir / "portfolio_metrics.csv")
+    print(f"  Saved: {out_dir / 'portfolio_metrics.csv'}")
 
-    corr_matrix.to_csv("portfolio_correlation.csv")
-    print("  Saved: portfolio_correlation.csv\n")
+    corr_matrix.to_csv(out_dir / "portfolio_correlation.csv")
+    print(f"  Saved: {out_dir / 'portfolio_correlation.csv'}\n")
 
 
 def plot_cumulative(
@@ -343,8 +344,9 @@ def plot_cumulative(
     ax.legend()
     ax.grid(True, alpha=0.3)
     plt.tight_layout()
-    plt.savefig("portfolio_cumulative.png", dpi=150)
-    print("  Saved: portfolio_cumulative.png")
+    out_path = Path(__file__).parent / "portfolio_cumulative.png"
+    plt.savefig(out_path, dpi=150)
+    print(f"  Saved: {out_path}")
     plt.show()
 
 
