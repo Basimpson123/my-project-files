@@ -15,10 +15,13 @@ Criteria:
 """
 
 import io
+import os
 import pandas as pd
 import yfinance as yf
 import requests
 import time
+
+OUTPUT_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "qadscreen_results.csv")
 
 
 def get_sp500_tickers():
@@ -162,8 +165,8 @@ def run_screen():
     print(df.to_string())
     print()
 
-    df.to_csv("qadscreen_results.csv", index=False)
-    print("Results saved to qadscreen_results.csv")
+    df.to_csv(OUTPUT_PATH, index=False)
+    print(f"Results saved to {OUTPUT_PATH}")
 
 
 if __name__ == "__main__":
