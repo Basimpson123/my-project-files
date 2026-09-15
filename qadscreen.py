@@ -12,6 +12,9 @@ Criteria:
   - Price >= 15% below 52-week high
   - ND/EBITDA < 4.0x  (deal-breaker)
   - Interest Coverage > 4.0x  (deal-breaker)
+
+Each run compares against the previous run's CSV and reports what entered,
+exited, and held. Only the most recent results are kept; no archive.
 """
 
 import io
@@ -33,34 +36,67 @@ def get_sp500_tickers():
     return df["Symbol"].str.replace(".", "-", regex=False).tolist()
 
 
-def check_stock(ticker: str) -> dict | None:
+def load_previous():
+    """Previous run's results as {ticker: row}, or None if there is no prior run."""
+    if not os.path.exists(OUTPUT_PATH):
+        return None
+    try:
+        df = pd.read_csv(OUTPUT_PATH)
+        if "Ticker" not in df.columns:
+            return None
+        return {row["Ticker"]: row for _, row in df.iterrows()}
+    except Exception:
+        return None
+
+
+def check_stock(ticker: str) -> tuple[dict | None, str | None]:
+    """Screen one ticker.
+
+    Returns (result, reason). On a pass, result is the row dict and reason is
+    None. On a fail, result is None and reason explains what went wrong -- so a
+    stock that dropped out of the screen can say why, and a Yahoo data gap can
+    be told apart from genuine deterioration.
+    """
     try:
         t = yf.Ticker(ticker)
         info = t.info
     except Exception:
-        return None
+        return None, "no data returned from Yahoo Finance"
 
     def get(key):
         v = info.get(key)
         return v if v not in (None, "N/A", "Infinity", float("inf")) else None
 
-    market_cap    = get("marketCap")
-    pe            = get("trailingPE")
-    fwd_pe        = get("forwardPE")
-    gross_margin  = get("grossMargins")
-    op_margin     = get("operatingMargins")
-    roe           = get("returnOnEquity")
-    debt_equity   = get("debtToEquity")
-    week_high_52  = get("fiftyTwoWeekHigh")
+    required = {
+        "marketCap":        get("marketCap"),
+        "trailingPE":       get("trailingPE"),
+        "forwardPE":        get("forwardPE"),
+        "grossMargins":     get("grossMargins"),
+        "operatingMargins": get("operatingMargins"),
+        "returnOnEquity":   get("returnOnEquity"),
+        "debtToEquity":     get("debtToEquity"),
+        "fiftyTwoWeekHigh": get("fiftyTwoWeekHigh"),
+        "ebitda":           get("ebitda"),
+    }
     current_price = get("currentPrice") or get("regularMarketPrice")
-    ebitda        = get("ebitda")
-    total_debt    = get("totalDebt") or 0
-    total_cash    = get("totalCash") or 0
+    if current_price is None:
+        required["currentPrice"] = None
 
-    if any(v is None for v in [market_cap, pe, fwd_pe, gross_margin,
-                                op_margin, roe, debt_equity,
-                                week_high_52, current_price, ebitda]):
-        return None
+    missing = [k for k, v in required.items() if v is None]
+    if missing:
+        return None, "MISSING DATA: " + ", ".join(missing)
+
+    market_cap   = required["marketCap"]
+    pe           = required["trailingPE"]
+    fwd_pe       = required["forwardPE"]
+    gross_margin = required["grossMargins"]
+    op_margin    = required["operatingMargins"]
+    roe          = required["returnOnEquity"]
+    debt_equity  = required["debtToEquity"]
+    week_high_52 = required["fiftyTwoWeekHigh"]
+    ebitda       = required["ebitda"]
+    total_debt   = get("totalDebt") or 0
+    total_cash   = get("totalCash") or 0
 
     # yfinance returns debtToEquity as a ratio * 100 for some tickers; normalize
     # Values > 10 are likely in percent form (e.g. 45 means 0.45)
@@ -96,23 +132,29 @@ def check_stock(ticker: str) -> dict | None:
 
     # Can't verify interest coverage for a levered company → disqualify
     if interest_coverage is None:
-        return None
+        return None, f"MISSING DATA: interest coverage unavailable (total debt ${total_debt / 1e9:.1f}B)"
 
-    passes = (
-        market_cap        >  2_000_000_000 and
-        pe                <  25            and
-        fwd_pe            <  25            and
-        gross_margin      >  0.25          and
-        op_margin         >  0.15          and
-        roe               >  0.10          and
-        de_ratio          <  1.0           and
-        pct_below_high    >= 0.15          and
-        nd_ebitda         <  4.0           and
-        interest_coverage >  4.0
-    )
+    nd_desc = ("negative EBITDA" if ebitda <= 0
+               else f"{nd_ebitda:.2f}x (need < 4.0x)")
+    ic_desc = ("effectively debt-free" if interest_coverage == float("inf")
+               else f"{interest_coverage:.1f}x (need > 4.0x)")
 
-    if not passes:
-        return None
+    checks = [
+        ("Market Cap",       market_cap > 2_000_000_000, f"${market_cap / 1e9:.1f}B (need > $2B)"),
+        ("P/E",              pe < 25,                    f"{pe:.1f} (need < 25)"),
+        ("Fwd P/E",          fwd_pe < 25,                f"{fwd_pe:.1f} (need < 25)"),
+        ("Gross Margin",     gross_margin > 0.25,        f"{gross_margin * 100:.1f}% (need > 25%)"),
+        ("Op Margin",        op_margin > 0.15,           f"{op_margin * 100:.1f}% (need > 15%)"),
+        ("ROE",              roe > 0.10,                 f"{roe * 100:.1f}% (need > 10%)"),
+        ("D/E",              de_ratio < 1.0,             f"{de_ratio:.2f} (need < 1.0)"),
+        ("% Below 52W High", pct_below_high >= 0.15,     f"{pct_below_high * 100:.1f}% (need >= 15%)"),
+        ("ND/EBITDA",        nd_ebitda < 4.0,            nd_desc),
+        ("Int Coverage",     interest_coverage > 4.0,    ic_desc),
+    ]
+
+    failed = [f"{name} {desc}" for name, ok, desc in checks if not ok]
+    if failed:
+        return None, "; ".join(failed)
 
     ic_display = round(interest_coverage, 1) if interest_coverage != float("inf") else 999.9
 
@@ -130,23 +172,108 @@ def check_stock(ticker: str) -> dict | None:
         "ND/EBITDA":        round(nd_ebitda, 2),
         "Int Coverage":     ic_display,
         "% Below 52W High": round(pct_below_high * 100, 1),
-    }
+    }, None
+
+
+def print_diff(previous, results, reasons, universe):
+    """Report what changed since the previous run."""
+    if previous is None:
+        print("=== No previous run found - this run becomes the baseline ===\n")
+        return
+
+    current = {r["Ticker"]: r for r in results}
+    prev_tickers = set(previous)
+    curr_tickers = set(current)
+
+    entered = sorted(curr_tickers - prev_tickers)
+    held    = sorted(curr_tickers & prev_tickers)
+    exited  = sorted(prev_tickers - curr_tickers)
+
+    # Three different kinds of exit, and they mean very different things.
+    dropped_index, data_gap, genuine = [], [], []
+    for ticker in exited:
+        reason = reasons.get(ticker)
+        if ticker not in universe:
+            dropped_index.append(ticker)
+        elif reason is None or reason.startswith("MISSING DATA") or reason.startswith("no data"):
+            data_gap.append((ticker, reason or "not screened"))
+        else:
+            genuine.append((ticker, reason))
+
+    print("=" * 70)
+    print("CHANGES SINCE LAST RUN")
+    print("=" * 70)
+
+    if not (entered or genuine or data_gap or dropped_index):
+        noun = "stock" if len(held) == 1 else "stocks"
+        print(f"\nNo changes. All {len(held)} {noun} from the previous run still pass.\n")
+        return
+
+    if entered:
+        print(f"\nENTERED ({len(entered)})")
+        for ticker in entered:
+            row = current[ticker]
+            print(f"  + {ticker:<6} {str(row['Company'])[:32]:<32} "
+                  f"${row['Market Cap ($B)']:>8.1f}B  {row['Industry']}")
+
+    if genuine:
+        print(f"\nEXITED ({len(genuine)})")
+        for ticker, reason in genuine:
+            company = str(previous[ticker].get("Company", ""))[:32]
+            print(f"  - {ticker:<6} {company}")
+            print(f"    {reason}")
+
+    if data_gap:
+        print(f"\nEXITED - DATA UNAVAILABLE ({len(data_gap)})")
+        print("    Likely a Yahoo Finance gap rather than a real change. Re-check next run.")
+        for ticker, reason in data_gap:
+            company = str(previous[ticker].get("Company", ""))[:32]
+            print(f"  ? {ticker:<6} {company}")
+            print(f"    {reason}")
+
+    if dropped_index:
+        print(f"\nEXITED - NO LONGER IN S&P 500 ({len(dropped_index)})")
+        for ticker in dropped_index:
+            company = str(previous[ticker].get("Company", ""))[:32]
+            print(f"  x {ticker:<6} {company}")
+
+    if held:
+        print(f"\nHELD ({len(held)})")
+        for i in range(0, len(held), 10):
+            print("    " + ", ".join(held[i:i + 10]))
+
+    print()
 
 
 def run_screen():
+    previous = load_previous()
+    if previous is None:
+        print("No previous results found - this run will become the baseline.")
+    else:
+        print(f"Loaded {len(previous)} stocks from the previous run.")
+
     print("Fetching S&P 500 tickers...")
     tickers = get_sp500_tickers()
+    universe = set(tickers)
     print(f"Screening {len(tickers)} tickers...\n")
 
+    # Failure reasons are only needed for stocks that were on the previous list.
+    watch = set(previous) if previous else set()
+
     results = []
+    reasons = {}
     for i, ticker in enumerate(tickers, 1):
         print(f"  [{i}/{len(tickers)}] {ticker}", end="\r")
-        result = check_stock(ticker)
+        result, reason = check_stock(ticker)
         if result:
             results.append(result)
+        elif ticker in watch:
+            reasons[ticker] = reason
         time.sleep(0.1)  # be polite to Yahoo Finance
 
     print("\n")
+
+    print_diff(previous, results, reasons, universe)
 
     if not results:
         print("No stocks passed the screen.")
