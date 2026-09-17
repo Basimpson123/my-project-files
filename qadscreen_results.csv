@@ -1,27 +1,23 @@
 Ticker,Company,Industry,Market Cap ($B),P/E,Fwd P/E,Gross Margin %,Op Margin %,ROE %,D/E,ND/EBITDA,Int Coverage,% Below 52W High
-BF-B,Brown-Forman Corporation,Beverages - Wineries & Distilleries,12.04,16.9,15.3,60.7,27.6,18.1,0.62,1.8,9.6,17.8
-CRH,CRH plc,Building Materials,59.2,15.7,13.7,36.2,19.0,15.8,0.78,2.17,6.9,32.4
-WDC,Western Digital Corporation,Computer Hardware,153.93,15.9,13.4,48.9,43.6,130.9,0.13,-0.08,61.0,46.6
-PYPL,"PayPal Holdings, Inc.",Credit Services,46.22,10.2,9.3,40.5,17.0,24.5,0.72,0.46,15.3,31.8
-TEL,TE Connectivity plc,Electronic Components,58.88,19.9,15.8,36.1,20.8,23.3,0.43,0.92,42.6,19.5
-CBOE,"Cboe Global Markets, Inc.",Financial Data & Stock Exchanges,29.71,22.2,18.7,54.1,34.6,26.3,0.28,-0.4,31.0,23.4
-FDS,FactSet Research Systems Inc.,Financial Data & Stock Exchanges,9.85,18.3,14.0,51.4,30.5,27.0,0.77,1.36,13.8,24.1
-DECK,Deckers Outdoor Corporation,Footwear & Accessories,10.97,11.5,9.7,57.8,15.2,42.6,0.21,-0.85,525.3,34.1
-ACN,Accenture plc,Information Technology Services,119.33,15.6,13.3,32.0,17.0,24.4,0.25,-0.14,47.4,33.0
-CTSH,Cognizant Technology Solutions Corporation,Information Technology Services,28.87,13.8,10.1,33.4,17.5,14.9,0.14,0.26,95.0,26.3
-BRO,"Brown & Brown, Inc.",Insurance Brokers,22.86,21.8,14.2,56.3,41.8,10.0,0.64,2.47,5.5,29.2
-BSX,Boston Scientific Corporation,Medical Devices,65.29,18.2,13.1,69.2,22.9,15.3,0.5,2.12,10.7,57.4
-EQT,EQT Corporation,Oil & Gas E&P,33.28,12.3,13.8,80.7,23.4,11.1,0.2,0.79,7.8,22.0
-EXE,Expand Energy Corporation,Oil & Gas E&P,21.62,8.1,10.7,47.1,26.3,14.9,0.19,0.46,10.7,26.2
-MKC,"McCormick & Company, Incorporated",Packaged Foods,13.55,8.4,15.3,38.9,17.4,24.7,0.65,3.17,5.7,30.4
-PHM,"PulteGroup, Inc.",Residential Construction,22.66,12.1,10.6,25.6,15.7,14.9,0.19,0.42,4813.1,17.7
-QCOM,QUALCOMM Incorporated,Semiconductors,192.41,20.6,17.7,54.2,18.5,33.8,0.55,0.58,20.1,30.7
-NXPI,NXP Semiconductors N.V.,Semiconductors,56.54,19.1,12.4,56.1,30.4,27.9,0.93,1.53,6.7,34.0
-ADBE,Adobe Inc.,Software - Application,105.58,14.8,9.6,89.3,34.8,61.9,0.57,0.12,34.2,28.4
-INTU,Intuit Inc.,Software - Application,90.63,20.6,12.4,81.0,17.6,23.6,0.44,0.18,24.5,51.9
-ROP,"Roper Technologies, Inc.",Software - Application,39.03,16.4,16.2,69.5,27.7,13.1,0.61,3.38,7.0,24.3
-PTC,PTC Inc.,Software - Application,14.83,13.3,15.3,84.5,28.2,35.1,0.46,0.98,12.9,34.5
-CPRT,"Copart, Inc.",Specialty Business Services,29.38,20.5,17.6,49.0,32.0,16.2,0.97,-2.34,999.9,34.9
-DOV,Dover Corporation,Specialty Industrial Machinery,25.47,22.9,16.2,40.1,18.7,14.9,0.42,0.79,13.5,20.4
-PNR,Pentair plc,Specialty Industrial Machinery,8.97,14.5,10.9,41.4,23.4,17.1,0.47,1.62,11.9,50.7
-AOS,A. O. Smith Corporation,Specialty Industrial Machinery,7.8,16.0,14.0,38.6,18.9,27.1,0.37,0.63,54.0,29.9
+BF-B,Brown-Forman Corporation,Beverages - Wineries & Distilleries,12.01,16.9,15.3,60.7,27.6,18.1,0.62,1.8,9.6,18.0
+CRH,CRH plc,Building Materials,58.34,15.5,13.5,36.2,19.0,15.8,0.78,2.17,6.9,33.3
+WDC,Western Digital Corporation,Computer Hardware,150.33,15.3,13.1,48.9,43.6,130.9,0.13,-0.08,61.0,47.9
+TEL,TE Connectivity plc,Electronic Components,58.54,19.8,15.7,36.1,20.8,23.3,0.43,0.92,42.6,19.9
+CME,CME Group Inc.,Financial Data & Stock Exchanges,98.92,23.4,21.3,100.0,65.0,15.8,0.15,0.33,31.7,16.4
+CBOE,"Cboe Global Markets, Inc.",Financial Data & Stock Exchanges,28.24,21.1,17.8,54.1,34.6,26.3,0.28,-0.4,31.0,27.1
+FDS,FactSet Research Systems Inc.,Financial Data & Stock Exchanges,9.85,18.3,14.0,51.4,30.5,27.0,0.77,1.36,13.8,20.5
+DECK,Deckers Outdoor Corporation,Footwear & Accessories,10.56,11.0,9.3,57.8,15.2,42.6,0.21,-0.85,525.3,36.6
+ACN,Accenture plc,Information Technology Services,118.35,15.4,13.2,32.0,17.0,24.4,0.25,-0.14,47.4,33.6
+CTSH,Cognizant Technology Solutions Corporation,Information Technology Services,28.5,13.6,10.0,33.4,17.5,14.9,0.14,0.26,95.0,27.3
+BRO,"Brown & Brown, Inc.",Insurance Brokers,22.5,21.5,13.9,56.3,41.8,10.0,0.64,2.47,5.5,30.4
+GOOGL,Alphabet Inc.,Internet Content & Information,4219.08,17.3,23.2,60.9,34.0,48.7,0.19,-0.7,216.8,15.6
+GOOG,Alphabet Inc.,Internet Content & Information,4175.67,17.1,23.0,60.9,34.0,48.7,0.19,-0.7,216.8,15.6
+BSX,Boston Scientific Corporation,Medical Devices,63.58,17.8,12.8,69.2,22.9,15.3,0.5,2.12,10.7,58.5
+EQT,EQT Corporation,Oil & Gas E&P,33.23,12.3,13.8,80.7,23.4,11.1,0.2,0.79,7.8,22.2
+EXE,Expand Energy Corporation,Oil & Gas E&P,21.81,8.1,10.8,47.1,26.3,14.9,0.19,0.46,10.7,25.6
+MKC,"McCormick & Company, Incorporated",Packaged Foods,13.4,8.3,15.1,38.9,17.4,24.7,0.65,3.17,5.7,31.1
+ADBE,Adobe Inc.,Software - Application,102.46,14.4,9.3,89.3,34.8,61.9,0.57,0.12,34.2,30.5
+INTU,Intuit Inc.,Software - Application,87.99,20.0,12.0,81.0,17.6,23.6,0.44,0.18,24.5,53.3
+CPRT,"Copart, Inc.",Specialty Business Services,28.74,20.0,17.3,49.0,32.0,16.2,0.97,-2.34,999.9,34.8
+DOV,Dover Corporation,Specialty Industrial Machinery,25.45,22.9,16.3,40.1,18.7,14.9,0.42,0.79,13.5,20.4
+AOS,A. O. Smith Corporation,Specialty Industrial Machinery,7.78,15.9,14.0,38.6,18.9,27.1,0.37,0.63,54.0,30.1
