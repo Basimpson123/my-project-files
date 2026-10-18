@@ -1,31 +1,29 @@
 Ticker,Company,Industry,Market Cap ($B),P/E,Fwd P/E,Gross Margin %,Op Margin %,ROE %,D/E,ND/EBITDA,Int Coverage,% Below 52W High
-CF,"CF Industries Holdings, Inc.",Agricultural Inputs,17.74,8.7,10.5,42.5,49.3,29.9,0.41,0.29,16.4,17.4
-INCY,Incyte Corporation,Biotechnology,22.02,13.8,12.5,55.7,41.9,30.7,0.6,-2.32,686.5,18.1
-CRH,CRH plc,Building Materials,53.32,14.2,12.4,36.2,19.0,15.8,0.78,2.17,6.9,39.1
-WDC,Western Digital Corporation,Computer Hardware,142.51,14.1,11.6,48.9,43.6,130.9,0.13,-0.08,61.0,52.4
-PYPL,"PayPal Holdings, Inc.",Credit Services,48.05,10.6,9.7,40.5,17.0,24.5,0.72,0.46,15.3,29.1
-NFLX,"Netflix, Inc.",Entertainment,293.39,22.2,18.5,49.1,33.4,49.5,0.55,0.51,17.4,43.6
-FOXA,Fox Corporation,Entertainment,26.35,16.3,10.7,36.6,25.2,14.3,0.64,0.87,6.7,18.2
-FOX,Fox Corporation,Entertainment,23.58,14.6,9.7,36.6,25.2,14.3,0.64,0.87,6.7,18.0
-SPGI,S&P Global Inc.,Financial Data & Stock Exchanges,120.87,25.0,20.3,70.9,44.8,14.3,0.43,1.43,22.7,21.5
-CME,CME Group Inc.,Financial Data & Stock Exchanges,99.97,23.6,21.4,100.0,65.0,15.8,0.15,0.33,31.7,15.5
-CBOE,"Cboe Global Markets, Inc.",Financial Data & Stock Exchanges,30.52,22.8,19.2,54.1,34.6,26.3,0.28,-0.4,31.0,21.3
-DECK,Deckers Outdoor Corporation,Footwear & Accessories,11.44,11.9,10.1,57.8,15.2,42.6,0.21,-0.85,525.3,31.3
-ACN,Accenture plc,Information Technology Services,130.69,15.7,13.4,32.0,15.3,26.0,0.4,0.04,47.4,26.6
-CTSH,Cognizant Technology Solutions Corporation,Information Technology Services,27.63,13.2,9.7,33.4,17.5,14.9,0.14,0.26,95.0,29.5
-WTW,Willis Towers Watson Public Limited Company,Insurance Brokers,27.59,18.4,13.0,42.5,17.6,19.8,0.91,1.93,8.5,15.5
-BRO,"Brown & Brown, Inc.",Insurance Brokers,21.43,20.2,13.3,56.3,41.8,10.0,0.64,2.47,5.5,32.8
-BSX,Boston Scientific Corporation,Medical Devices,62.77,17.5,12.8,69.2,22.9,15.3,0.5,2.12,10.7,59.0
-EQT,EQT Corporation,Oil & Gas E&P,34.05,12.6,14.4,80.7,23.4,11.1,0.2,0.79,7.8,20.2
-EXE,Expand Energy Corporation,Oil & Gas E&P,21.38,8.0,9.1,47.1,26.3,14.9,0.19,0.46,10.7,27.1
-MKC,"McCormick & Company, Incorporated",Packaged Foods,12.01,8.1,13.9,38.9,17.8,22.6,0.66,3.12,5.7,38.4
-PHM,"PulteGroup, Inc.",Residential Construction,21.25,11.4,10.3,25.6,15.7,14.9,0.19,0.42,4813.1,22.8
-QCOM,QUALCOMM Incorporated,Semiconductors,188.86,20.5,17.3,54.2,18.5,33.8,0.55,0.58,20.1,32.0
-NXPI,NXP Semiconductors N.V.,Semiconductors,57.07,19.3,12.4,56.1,30.4,27.9,0.93,1.53,6.7,33.4
-ADBE,Adobe Inc.,Software - Application,91.96,13.2,8.5,89.3,34.8,61.9,0.58,0.12,34.2,35.0
-INTU,Intuit Inc.,Software - Application,80.56,18.3,11.1,81.0,17.6,23.6,0.44,0.18,24.5,56.3
-ROP,"Roper Technologies, Inc.",Software - Application,36.44,15.4,15.1,69.5,27.7,13.1,0.61,3.38,7.0,29.0
-CPRT,"Copart, Inc.",Specialty Business Services,24.43,17.0,15.1,45.3,32.0,16.2,0.97,-2.36,999.9,42.5
-DOV,Dover Corporation,Specialty Industrial Machinery,25.92,23.3,16.5,40.1,18.7,14.9,0.42,0.79,13.5,19.0
-PNR,Pentair plc,Specialty Industrial Machinery,8.45,13.7,10.1,41.4,23.4,17.1,0.47,1.62,11.9,52.8
-AOS,A. O. Smith Corporation,Specialty Industrial Machinery,7.87,16.1,14.3,38.6,18.9,27.1,0.37,0.63,54.0,29.3
+CRH,CRH plc,Building Materials,55.64,14.8,13.0,36.2,19.0,15.8,0.78,2.17,6.9,36.4
+WDC,Western Digital Corporation,Computer Hardware,124.28,12.3,10.0,48.9,43.6,130.9,0.13,-0.08,61.0,58.5
+PYPL,"PayPal Holdings, Inc.",Credit Services,48.5,10.7,9.8,40.5,17.0,24.5,0.72,0.46,15.3,28.4
+TEL,TE Connectivity plc,Electronic Components,61.56,20.8,16.4,36.1,20.8,23.3,0.43,0.92,42.6,15.8
+NFLX,"Netflix, Inc.",Entertainment,293.68,22.2,18.6,49.1,33.4,49.5,0.55,0.51,17.4,43.5
+FOXA,Fox Corporation,Entertainment,27.05,16.7,10.9,36.6,25.2,14.3,0.64,0.87,6.7,16.0
+FOX,Fox Corporation,Entertainment,24.13,14.9,10.0,36.6,25.2,14.3,0.64,0.87,6.7,16.1
+CBOE,"Cboe Global Markets, Inc.",Financial Data & Stock Exchanges,32.89,24.6,20.7,54.1,34.6,26.3,0.28,-0.4,31.0,15.1
+DECK,Deckers Outdoor Corporation,Footwear & Accessories,11.67,12.1,10.3,57.8,15.2,42.6,0.21,-0.85,525.3,29.9
+ACN,Accenture plc,Information Technology Services,140.55,16.9,14.5,32.0,15.3,26.0,0.4,0.04,47.4,21.1
+CTSH,Cognizant Technology Solutions Corporation,Information Technology Services,29.74,14.2,10.4,33.4,17.5,14.9,0.14,0.26,95.0,24.1
+BRO,"Brown & Brown, Inc.",Insurance Brokers,23.22,21.9,14.4,56.3,41.8,10.0,0.64,2.47,5.5,23.3
+GOOGL,Alphabet Inc.,Internet Content & Information,4165.39,17.1,22.3,60.9,34.0,48.7,0.19,-0.7,216.8,16.6
+GOOG,Alphabet Inc.,Internet Content & Information,4120.39,16.9,22.0,60.9,34.0,48.7,0.19,-0.7,216.8,16.7
+BSX,Boston Scientific Corporation,Medical Devices,64.33,18.0,13.1,69.2,22.9,15.3,0.5,2.12,10.7,58.0
+EQT,EQT Corporation,Oil & Gas E&P,33.97,12.6,14.8,80.7,23.4,11.1,0.2,0.79,7.8,20.4
+EXE,Expand Energy Corporation,Oil & Gas E&P,21.62,8.1,10.2,47.1,26.3,14.9,0.19,0.46,10.7,26.2
+MKC,"McCormick & Company, Incorporated",Packaged Foods,12.47,8.4,14.4,38.9,17.8,22.6,0.66,3.12,5.7,36.0
+PHM,"PulteGroup, Inc.",Residential Construction,21.63,11.6,10.6,25.6,15.7,14.9,0.19,0.42,4813.1,21.4
+QCOM,QUALCOMM Incorporated,Semiconductors,183.79,19.9,16.9,54.2,18.5,33.8,0.55,0.58,20.1,33.8
+NXPI,NXP Semiconductors N.V.,Semiconductors,57.83,19.6,12.6,56.1,30.4,27.9,0.93,1.53,6.7,32.5
+ADBE,Adobe Inc.,Software - Application,95.43,13.7,8.9,89.3,34.8,61.9,0.58,0.12,34.2,32.6
+INTU,Intuit Inc.,Software - Application,86.89,19.8,12.1,81.0,17.6,23.6,0.44,0.18,24.5,52.8
+ROP,"Roper Technologies, Inc.",Software - Application,37.85,15.9,15.7,69.5,27.7,13.1,0.61,3.38,7.0,26.3
+CPRT,"Copart, Inc.",Specialty Business Services,25.82,18.0,15.9,45.3,32.0,16.2,0.97,-2.36,999.9,39.3
+DOV,Dover Corporation,Specialty Industrial Machinery,26.37,23.7,16.8,40.1,18.7,14.9,0.42,0.79,13.5,17.6
+PNR,Pentair plc,Specialty Industrial Machinery,8.53,13.8,10.2,41.4,23.4,17.1,0.47,1.62,11.9,52.3
+AOS,A. O. Smith Corporation,Specialty Industrial Machinery,8.05,16.5,14.6,38.6,18.9,27.1,0.37,0.63,54.0,27.7
