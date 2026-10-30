@@ -2,7 +2,7 @@
 
 ## Overview
 
-`qadscreen.py` screens all ~503 S&P 500 constituents against a set of quality, value, and liquidity criteria. Results are printed to the terminal and saved to `qadscreen_results.csv`, which is overwritten on every run.
+`qadscreen.py` screens all ~503 S&P 500 constituents against a set of quality, value, and liquidity criteria. Each run reports which stocks entered, exited, or held since the previous run, then prints the full results and saves them to `qadscreen_results.csv`, which is overwritten on every run.
 
 ## How to Run
 
@@ -57,9 +57,23 @@ The ND/EBITDA and interest coverage filters are treated as hard disqualifiers:
 
 Results are sorted alphabetically by **Industry**, then by **Market Cap** largest-to-smallest within each industry.
 
+## Changes Since Last Run
+
+Before overwriting the CSV, each run compares its results against the previous run's `qadscreen_results.csv` and prints a **CHANGES SINCE LAST RUN** report:
+
+| Section | Meaning |
+|---|---|
+| `+` ENTERED | Passed this run but not last run |
+| `-` EXITED | Failed one or more criteria — each failed check is listed with its value and threshold (e.g. `P/E 27.3 (need < 25)`) |
+| `?` EXITED - DATA UNAVAILABLE | Couldn't be screened because Yahoo Finance returned missing data. Usually a temporary data gap rather than a real change — re-check next run |
+| `x` EXITED - NO LONGER IN S&P 500 | Removed from the index since last run |
+| HELD | Passed both this run and last run |
+
+If nothing changed, the report says so. If no previous CSV exists (or it can't be read), the run becomes the baseline and no comparison is printed.
+
 ## Output File
 
-`qadscreen_results.csv` — saved in the same directory as the script. **Each run overwrites the previous file.**
+`qadscreen_results.csv` — saved in the same directory as the script. **Each run overwrites the previous file**, and only the most recent results are kept (no archive). This file is also the baseline for the next run's comparison, so deleting it resets the change report. If no stocks pass the screen, the existing file is left untouched.
 
 ## Dependencies
 
