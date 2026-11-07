@@ -10,20 +10,23 @@
 python qadscreen.py
 ```
 
-A full run takes roughly 10–15 minutes due to rate-limit throttling between Yahoo Finance requests.
+A full run takes several minutes. The income statement (a second Yahoo request) is only fetched for stocks that clear the other checks, or that passed last run, which keeps most tickers to a single request.
+
+All thresholds are defined once as constants at the top of `qadscreen.py` (`MAX_PE`, `MIN_ROE`, etc.) — edit them there to tune the screen.
 
 ## Screen Criteria
 
 | Criteria | Threshold |
 |---|---|
-| Index | S&P 500 constituents only |
+| Index | S&P 500 constituents only (one share class per company — see Notes) |
 | Market Cap | > $2B |
-| P/E (trailing) | < 25 |
-| Forward P/E | < 25 |
+| P/E (trailing) | Between 0 and 25 (negative = losses, fails) |
+| Forward P/E | Between 0 and 25 (negative = forecast loss, fails) |
 | Gross Margin | > 25% |
 | Operating Margin | > 15% |
 | Return on Equity | > 10% |
-| Debt / Equity | < 1.0 |
+| Shareholder Equity | Must be positive |
+| Debt / Equity | < 1.0x |
 | Price vs 52-Week High | 15% or more below |
 | **ND/EBITDA** | **< 4.0x (deal-breaker)** |
 | **Interest Coverage** | **> 4.0x (deal-breaker)** |
@@ -41,6 +44,7 @@ The ND/EBITDA and interest coverage filters are treated as hard disqualifiers:
 
 | Column | Description |
 |---|---|
+| Status | `Added` (new this run), `Held` (passed last run too), `Baseline` (first run), or `Removed - ...` (see below) |
 | Ticker | Stock symbol |
 | Company | Full company name |
 | Industry | Yahoo Finance industry classification |
@@ -50,12 +54,15 @@ The ND/EBITDA and interest coverage filters are treated as hard disqualifiers:
 | Gross Margin % | Gross profit margin |
 | Op Margin % | Operating profit margin |
 | ROE % | Return on equity |
-| D/E | Debt-to-equity ratio (normalised) |
+| D/E | Debt-to-equity as a ratio (0.25 = debt is 25% of equity) |
 | ND/EBITDA | Net debt to EBITDA |
 | Int Coverage | EBIT / Interest Expense (999.9 = effectively debt-free) |
 | % Below 52W High | How far the current price sits below the 52-week high |
+| Reason | Removed rows only: why the stock dropped out |
 
-Results are sorted alphabetically by **Industry**, then by **Market Cap** largest-to-smallest within each industry.
+Passing stocks are sorted alphabetically by **Industry**, then by **Market Cap** largest-to-smallest within each industry.
+
+Stocks that dropped out **this run** are listed at the bottom with a `Removed - failed criteria`, `Removed - data unavailable`, or `Removed - left S&P 500` status, the reason in the **Reason** column, and their figures from the last run they passed. Filter the Status column in Excel to see just the adds or removals.
 
 ## Changes Since Last Run
 
@@ -73,7 +80,7 @@ If nothing changed, the report says so. If no previous CSV exists (or it can't b
 
 ## Output File
 
-`qadscreen_results.csv` — saved in the same directory as the script. **Each run overwrites the previous file**, and only the most recent results are kept (no archive). This file is also the baseline for the next run's comparison, so deleting it resets the change report. If no stocks pass the screen, the existing file is left untouched.
+`qadscreen_results.csv` — saved in the same directory as the script. **Each run overwrites the previous file**, and only the most recent results are kept (no archive). This file is also the baseline for the next run's comparison (Removed rows are ignored), so deleting it resets the change report. If the file is open in Excel when the run finishes, the save fails with a message — close it and re-run. If no stocks pass the screen, the existing file is left untouched.
 
 ## Dependencies
 
@@ -89,5 +96,8 @@ pip install yfinance pandas requests lxml
 
 ## Notes
 
-- `debtToEquity` from Yahoo Finance is sometimes reported as a percentage (e.g. 45 = 0.45x). The script normalises values above 10 by dividing by 100.
+- `debtToEquity` from Yahoo Finance is always a percentage (e.g. 45 = 0.45x); the script divides by 100. Yahoo omits it for companies with no debt, which are treated as 0x rather than as missing data.
+- Companies with negative shareholder equity (common after heavy buybacks — e.g. MCD, AZO, LOW) are rejected with the reason `Equity negative shareholder equity`. Yahoo leaves their ROE and D/E blank, so this is checked first to avoid misreporting them as data gaps.
+- **Share classes:** companies with more than one share class in the index are screened once, using the Class A ticker (GOOGL not GOOG, FOXA not FOX, NWSA not NWS). The skipped tickers are never reported as having left the S&P 500.
+- **Retries:** stocks that passed last run get one retry (after a 2-second pause) if Yahoo returns incomplete data, and every check is run so their exit reason is complete. This cuts down false "data unavailable" exits.
 - The 0.1-second sleep between tickers is intentional to avoid hitting Yahoo Finance rate limits.
