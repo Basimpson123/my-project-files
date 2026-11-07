@@ -1,28 +1,40 @@
-Ticker,Company,Industry,Market Cap ($B),P/E,Fwd P/E,Gross Margin %,Op Margin %,ROE %,D/E,ND/EBITDA,Int Coverage,% Below 52W High
-CRH,CRH plc,Building Materials,60.41,16.0,14.6,36.2,18.0,13.9,0.79,2.04,6.9,31.0
-HON,Honeywell International Inc.,Conglomerates,69.2,10.8,22.2,37.2,16.9,44.4,0.76,1.23,5.1,16.1
-PYPL,"PayPal Holdings, Inc.",Credit Services,47.36,10.9,9.7,40.5,18.4,23.8,0.73,0.61,15.3,19.0
-TEL,TE Connectivity plc,Electronic Components,61.25,19.2,14.1,36.2,21.2,24.6,0.41,0.76,42.6,15.7
-NFLX,"Netflix, Inc.",Entertainment,258.5,17.9,16.5,50.7,34.6,53.5,0.6,0.58,17.4,46.8
-FOXA,Fox Corporation,Entertainment,26.67,16.5,10.8,36.6,25.2,14.3,0.64,0.87,6.7,17.2
-FOX,Fox Corporation,Entertainment,23.7,14.6,9.2,36.6,25.2,14.3,0.64,0.87,6.7,17.6
-DECK,Deckers Outdoor Corporation,Footwear & Accessories,10.94,10.9,10.0,58.9,23.2,44.3,0.23,-0.48,525.3,33.0
-NEM,Newmont Corporation,Gold,110.79,12.4,10.7,68.0,50.0,27.3,0.16,-0.18,50.5,21.2
-CTSH,Cognizant Technology Solutions Corporation,Information Technology Services,29.11,14.0,10.4,33.4,16.3,17.4,0.14,0.14,95.0,25.2
-GOOGL,Alphabet Inc.,Internet Content & Information,3440.35,14.6,18.5,60.9,31.8,44.3,0.21,-0.67,216.8,31.5
-GOOG,Alphabet Inc.,Internet Content & Information,3420.44,14.5,18.4,60.9,31.8,44.3,0.21,-0.67,216.8,31.2
-META,"Meta Platforms, Inc.",Internet Content & Information,1572.43,21.0,17.3,81.0,35.4,32.3,0.42,0.28,74.8,21.1
-RDDT,"Reddit, Inc.",Internet Content & Information,17.65,21.3,9.5,91.4,28.8,30.7,0.64,-3.45,999.9,65.2
-BSX,Boston Scientific Corporation,Medical Devices,60.84,17.7,13.3,68.6,20.2,14.3,0.5,2.12,10.7,60.3
-EQT,EQT Corporation,Oil & Gas E&P,34.64,13.1,15.8,80.4,28.2,10.5,0.19,0.81,7.8,18.8
-EXE,Expand Energy Corporation,Oil & Gas E&P,20.91,7.8,10.3,45.9,23.2,14.6,0.24,0.68,10.7,28.5
-MKC,"McCormick & Company, Incorporated",Packaged Foods,12.72,8.6,14.7,38.9,17.8,22.6,0.66,3.12,5.7,34.7
-QCOM,QUALCOMM Incorporated,Semiconductors,175.97,19.1,16.2,54.2,18.5,33.8,0.55,0.58,20.1,36.6
-NXPI,NXP Semiconductors N.V.,Semiconductors,65.44,20.4,14.2,56.5,32.3,28.7,0.88,1.31,6.7,23.6
-ADBE,Adobe Inc.,Software - Application,97.39,14.0,9.1,89.3,34.8,61.9,0.58,0.12,34.2,31.0
-INTU,Intuit Inc.,Software - Application,91.15,20.7,12.7,81.0,17.6,23.6,0.44,0.18,24.5,50.0
-CPRT,"Copart, Inc.",Specialty Business Services,27.91,19.4,16.6,45.3,32.0,16.2,0.97,-2.36,999.9,30.5
-PNR,Pentair plc,Specialty Industrial Machinery,10.58,18.1,12.5,40.2,21.9,15.6,0.42,1.61,11.9,39.7
-AOS,A. O. Smith Corporation,Specialty Industrial Machinery,8.47,17.6,16.2,38.6,18.6,27.0,0.39,0.61,54.0,23.0
-CMCSA,Comcast Corporation,Telecom Services,82.45,7.3,6.6,69.8,18.2,11.4,0.94,2.38,6.8,29.3
-SNA,Snap-on Incorporated,Tools & Accessories,18.4,18.5,17.1,51.9,24.9,17.3,0.21,-0.26,27.5,15.9
+Status,Ticker,Company,Industry,Market Cap ($B),P/E,Fwd P/E,Gross Margin %,Op Margin %,ROE %,D/E,ND/EBITDA,Int Coverage,% Below 52W High,Reason
+Added,CF,"CF Industries Holdings, Inc.",Agricultural Inputs,17.46,8.4,10.6,42.5,34.4,30.9,0.41,0.21,16.4,15.9,
+Held,CRH,CRH plc,Building Materials,63.07,17.9,15.9,36.2,18.2,13.9,0.82,2.12,6.9,27.9,
+Added,SNDK,Sandisk Corporation,Computer Hardware,118.82,6.7,2.9,80.0,79.6,141.2,0.01,-0.24,179.3,64.5,
+Added,STX,Seagate Technology Holdings plc,Computer Hardware,105.83,24.2,7.1,50.4,48.9,259.4,0.77,0.24,14.0,59.7,
+Added,WDC,Western Digital Corporation,Computer Hardware,98.74,9.3,6.5,52.6,47.7,129.6,0.1,-0.06,61.0,67.0,
+Held,HON,Honeywell International Inc.,Conglomerates,69.74,10.9,22.3,37.2,16.9,44.4,0.76,1.23,5.1,15.5,
+Added,FCX,Freeport-McMoRan Inc.,Copper,85.33,25.0,14.0,38.9,35.3,15.7,0.31,0.6,18.3,25.9,
+Held,TEL,TE Connectivity plc,Electronic Components,59.52,18.7,13.6,36.2,21.1,24.6,0.41,0.76,42.6,18.0,
+Added,FIX,"Comfort Systems USA, Inc.",Engineering & Construction,35.81,22.0,15.2,25.7,16.5,58.6,0.11,-0.81,186.3,50.9,
+Held,NFLX,"Netflix, Inc.",Entertainment,260.38,18.3,16.8,50.7,34.6,53.5,0.6,0.58,17.4,45.7,
+Held,DECK,Deckers Outdoor Corporation,Footwear & Accessories,11.57,11.5,10.6,58.9,26.3,44.3,0.23,-0.48,525.3,29.1,
+Held,CTSH,Cognizant Technology Solutions Corporation,Information Technology Services,28.93,11.8,10.3,33.4,16.3,17.4,0.14,0.14,95.0,25.6,
+Added,GL,Globe Life Inc.,Insurance - Life,11.86,10.5,9.6,33.1,30.6,19.3,0.52,1.87,11.2,17.9,
+Held,GOOGL,Alphabet Inc.,Internet Content & Information,3501.09,14.9,18.5,60.9,31.8,44.3,0.22,-0.62,216.8,30.3,
+Held,META,"Meta Platforms, Inc.",Internet Content & Information,1560.05,20.8,17.1,81.0,35.4,32.3,0.42,0.28,74.8,21.8,
+Held,RDDT,"Reddit, Inc.",Internet Content & Information,18.36,19.4,10.2,91.5,29.2,32.0,0.01,-3.25,999.9,63.9,
+Held,BSX,Boston Scientific Corporation,Medical Devices,61.96,18.0,13.7,68.0,19.1,14.1,0.46,2.04,10.7,59.5,
+Added,PODD,Insulet Corporation,Medical Devices,10.16,23.9,18.6,71.9,22.5,28.9,0.66,0.65,6.7,58.7,
+Added,DVN,Devon Energy Corporation,Oil & Gas E&P,48.11,9.9,7.9,53.5,19.8,12.6,0.26,1.05,8.0,19.9,
+Held,EQT,EQT Corporation,Oil & Gas E&P,30.9,11.7,14.3,80.4,28.2,10.5,0.19,0.81,7.8,27.6,
+Held,EXE,Expand Energy Corporation,Oil & Gas E&P,19.54,7.3,10.4,45.9,23.2,14.6,0.24,0.68,10.7,33.2,
+Added,APA,APA Corporation,Oil & Gas E&P,14.98,7.3,8.2,79.0,44.3,33.3,0.42,0.53,11.0,15.7,
+Held,MKC,"McCormick & Company, Incorporated",Packaged Foods,13.02,8.8,15.0,38.9,17.8,22.6,0.66,3.12,5.7,33.2,
+Added,NVDA,NVIDIA Corporation,Semiconductors,4506.8,23.6,11.7,74.7,66.2,117.2,0.17,-0.12,547.1,23.3,
+Added,MU,"Micron Technology, Inc.",Semiconductors,780.68,9.3,3.3,80.7,80.7,88.3,0.04,-0.35,941.3,45.0,
+Held,QCOM,QUALCOMM Incorporated,Semiconductors,176.99,13.0,13.2,53.1,15.4,52.8,0.53,0.78,14.7,36.4,
+Held,NXPI,NXP Semiconductors N.V.,Semiconductors,62.58,19.5,13.5,56.5,32.3,28.7,0.88,1.31,6.7,27.0,
+Held,ADBE,Adobe Inc.,Software - Application,93.14,13.4,8.7,89.3,34.8,61.9,0.58,0.12,34.2,34.0,
+Held,INTU,Intuit Inc.,Software - Application,91.26,20.7,12.7,81.0,17.6,23.6,0.44,0.18,24.5,49.9,
+Added,FSLR,"First Solar, Inc.",Solar,21.62,11.6,8.7,49.3,44.4,18.7,0.03,-0.52,36.8,37.3,
+Held,CPRT,"Copart, Inc.",Specialty Business Services,29.6,20.6,17.7,45.3,32.0,16.2,0.01,-2.36,999.9,24.0,
+Added,IR,Ingersoll Rand Inc.,Specialty Industrial Machinery,31.87,23.5,21.0,42.6,18.8,13.4,0.46,1.76,4.7,17.8,
+Held,PNR,Pentair plc,Specialty Industrial Machinery,10.88,18.6,12.9,40.2,21.9,15.6,0.42,1.61,11.9,38.0,
+Held,AOS,A. O. Smith Corporation,Specialty Industrial Machinery,8.67,18.0,17.1,38.6,18.6,27.0,0.39,0.61,54.0,21.2,
+Held,CMCSA,Comcast Corporation,Telecom Services,86.61,7.7,6.9,69.8,18.2,11.4,0.94,2.38,6.8,25.8,
+Removed - failed criteria,FOXA,Fox Corporation,Entertainment,26.67,16.5,10.8,36.6,25.2,14.3,0.64,0.87,6.7,17.2,% Below 52W High 12.8% (need >= 15%)
+Removed - failed criteria,NEM,Newmont Corporation,Gold,110.79,12.4,10.7,68.0,50.0,27.3,0.16,-0.18,50.5,21.2,% Below 52W High 10.6% (need >= 15%)
+Removed - failed criteria,PYPL,"PayPal Holdings, Inc.",Credit Services,47.36,10.9,9.7,40.5,18.4,23.8,0.73,0.61,15.3,19.0,% Below 52W High 12.9% (need >= 15%)
+Removed - failed criteria,SNA,Snap-on Incorporated,Tools & Accessories,18.4,18.5,17.1,51.9,24.9,17.3,0.21,-0.26,27.5,15.9,% Below 52W High 13.2% (need >= 15%)
