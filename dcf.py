@@ -82,6 +82,9 @@ def fetch_data(symbol):
     # Diluted shares from income statement (#5)
     diluted_row = get_row(inc, ["Diluted Average Shares", "Diluted Shares"], "Diluted Shares")
 
+    # Revenue — not used by dcf.py itself; consumed by montecarlo_dcf.py
+    revenue_row = get_row(inc, ["Total Revenue", "Operating Revenue", "Revenue"], "Revenue")
+
     if any(r is None for r in [ebit_row, da_row]):
         return None
     # CapEx is optional — asset-light companies may not report it separately; default to 0
@@ -98,11 +101,13 @@ def fetch_data(symbol):
     tax_y     = to_year_dict(tax_row) if tax_row is not None else {}
     sbc_y     = to_year_dict(sbc_row) if sbc_row is not None else {}
     ocf_y     = to_year_dict(ocf_row) if ocf_row is not None else {}
+    revenue_y = to_year_dict(revenue_row) if revenue_row is not None else {}
 
     common_years = sorted(set(ebit_y) & set(da_y), reverse=True)
 
     fcff_expense_by_date = {}
     fcff_addback_by_date = {}
+    components_by_date   = {}   # per-year FCFF building blocks (for montecarlo_dcf.py)
     tax_rates            = []
 
     for year in common_years:
@@ -146,6 +151,15 @@ def fetch_data(symbol):
 
         fcff_expense_by_date[year] = fcff_expense
         fcff_addback_by_date[year] = fcff_addback
+        components_by_date[year]   = {
+            "revenue":  revenue_y.get(year, np.nan),
+            "ebit":     ebit,
+            "da":       da,
+            "capex":    capex,
+            "wc":       wc,
+            "sbc":      sbc,
+            "tax_rate": tax_rate,
+        }
 
     if not fcff_expense_by_date:
         return None
@@ -153,6 +167,10 @@ def fetch_data(symbol):
     sorted_years        = sorted(fcff_expense_by_date.keys(), reverse=True)
     fcff_expense_values = np.array([fcff_expense_by_date[y] for y in sorted_years])
     fcff_addback_values = np.array([fcff_addback_by_date[y] for y in sorted_years])
+
+    # Arrays aligned with sorted_years (most recent first); revenue may contain NaN
+    def component_array(key):
+        return np.array([components_by_date[y][key] for y in sorted_years], dtype=float)
 
     cash_row = get_row(bs, ["Cash And Cash Equivalents",
                              "Cash Cash Equivalents And Short Term Investments",
@@ -201,6 +219,14 @@ def fetch_data(symbol):
         "market_cap":          market_cap,
         "interest_expense":    interest_expense,
         "avg_tax_rate":        avg_tax_rate,
+        # Extra fields for montecarlo_dcf.py (dcf.py ignores these)
+        "revenue_values":      component_array("revenue"),
+        "ebit_values":         component_array("ebit"),
+        "da_values":           component_array("da"),
+        "capex_values":        component_array("capex"),
+        "wc_values":           component_array("wc"),
+        "sbc_values":          component_array("sbc"),
+        "tax_rate_values":     component_array("tax_rate"),
     }
 
 
@@ -230,54 +256,25 @@ def compute_wacc(data):
     return max(min(wacc, 0.20), 0.05)
 
 
-def run_dcf(base_fcff, cash, debt, shares, growth_rate, wacc):
-    """Two-stage DCF: growth fades linearly to terminal rate over projection period (#4)."""
-    if wacc <= TERMINAL_GROWTH:
-        return None
-
-    pv_fcffs       = []
-    projected_fcff = base_fcff
-
-    for year in range(1, PROJECTION_YEARS + 1):
-        # Linearly blend growth_rate → TERMINAL_GROWTH (year 1 = full, year N = terminal)
-        t              = (year - 1) / max(PROJECTION_YEARS - 1, 1)
-        year_growth    = growth_rate * (1 - t) + TERMINAL_GROWTH * t
-        projected_fcff *= (1 + year_growth)
-        pv_fcffs.append(projected_fcff / ((1 + wacc) ** year))
-
-    pv_terminal = ((projected_fcff * (1 + TERMINAL_GROWTH))
-                   / (wacc - TERMINAL_GROWTH)
-                   / ((1 + wacc) ** PROJECTION_YEARS))
-
-    enterprise_value = sum(pv_fcffs) + pv_terminal
-    equity_value     = enterprise_value + cash - debt
-
-    if not shares or shares == 0:
-        return None
-    return equity_value / shares
-
-
-def calculate_dcf(data, symbol, fcff_values=None, label_suffix=""):
-    if fcff_values is None:
-        fcff_values = data["fcff_expense_values"]
-
-    if len(fcff_values) < 2:
-        print(f"{symbol}: Not enough FCFF history.")
-        return
-
-    fcff_chron = fcff_values[::-1]  # oldest first
+def blended_growth(values):
+    """
+    Historical growth estimate shared by dcf.py and montecarlo_dcf.py.
+    `values` is most-recent-first. Returns a 50/50 blend of CAGR (#3) and
+    EWMA-weighted YoY growth (#6), or None if neither can be computed. Unclamped.
+    """
+    chron = np.asarray(values, dtype=float)[::-1]  # oldest first
 
     # CAGR (geometric mean) from oldest to most recent positive endpoint (#3)
     cagr = None
-    if fcff_chron[0] > 0 and fcff_chron[-1] > 0:
-        n    = len(fcff_chron) - 1
-        cagr = (fcff_chron[-1] / fcff_chron[0]) ** (1 / n) - 1
+    if chron[0] > 0 and chron[-1] > 0:
+        n    = len(chron) - 1
+        cagr = (chron[-1] / chron[0]) ** (1 / n) - 1
 
     # EWMA-weighted YoY rates — recent years carry more weight (#6)
     # Use (curr - prev) / abs(prev) so negative-base years get the right sign
     yoy_pairs = []
-    for i in range(1, len(fcff_chron)):
-        prev, curr = fcff_chron[i - 1], fcff_chron[i]
+    for i in range(1, len(chron)):
+        prev, curr = chron[i - 1], chron[i]
         if prev != 0:
             yoy_pairs.append((i, (curr - prev) / abs(prev)))
 
@@ -290,12 +287,68 @@ def calculate_dcf(data, symbol, fcff_values=None, label_suffix=""):
 
     # Blend CAGR and EWMA when both are available
     if cagr is not None and ewma_growth is not None:
-        base_growth = 0.5 * cagr + 0.5 * ewma_growth
-    elif cagr is not None:
-        base_growth = cagr
-    elif ewma_growth is not None:
-        base_growth = ewma_growth
-    else:
+        return 0.5 * cagr + 0.5 * ewma_growth
+    if cagr is not None:
+        return cagr
+    return ewma_growth
+
+
+def fade_growth(start_growth, terminal_growth, years=PROJECTION_YEARS):
+    """
+    Year-by-year growth path that fades linearly from start_growth (year 1) to
+    terminal_growth (year N) (#4). Accepts scalars or numpy arrays (one value per
+    simulation); returns shape (..., years).
+    """
+    t     = np.arange(years) / max(years - 1, 1)              # 0.0 … 1.0
+    start = np.asarray(start_growth, dtype=float)[..., np.newaxis]
+    term  = np.asarray(terminal_growth, dtype=float)[..., np.newaxis]
+    return start * (1 - t) + term * t
+
+
+def value_per_share(fcff_paths, wacc, terminal_growth, cash, debt, shares):
+    """
+    Discount projected FCFF + Gordon-growth terminal value to equity value per share.
+    Vectorized: fcff_paths has shape (..., years); wacc and terminal_growth are
+    scalars or arrays matching the leading dimensions. Caller must ensure
+    wacc > terminal_growth and shares > 0.
+    """
+    fcff     = np.asarray(fcff_paths, dtype=float)
+    wacc     = np.asarray(wacc, dtype=float)
+    tg       = np.asarray(terminal_growth, dtype=float)
+    n_years  = fcff.shape[-1]
+    years    = np.arange(1, n_years + 1)
+
+    pv_fcffs    = (fcff / (1 + wacc[..., np.newaxis]) ** years).sum(axis=-1)
+    pv_terminal = (fcff[..., -1] * (1 + tg)) / (wacc - tg) / (1 + wacc) ** n_years
+
+    enterprise_value = pv_fcffs + pv_terminal
+    equity_value     = enterprise_value + cash - debt
+    return equity_value / shares
+
+
+def run_dcf(base_fcff, cash, debt, shares, growth_rate, wacc):
+    """Two-stage DCF: growth fades linearly to terminal rate over projection period (#4)."""
+    if wacc <= TERMINAL_GROWTH:
+        return None
+    if not shares or shares == 0:
+        return None
+
+    growth_path    = fade_growth(growth_rate, TERMINAL_GROWTH, PROJECTION_YEARS)
+    projected_fcff = base_fcff * np.cumprod(1 + growth_path)
+    return float(value_per_share(projected_fcff, wacc, TERMINAL_GROWTH, cash, debt, shares))
+
+
+def calculate_dcf(data, symbol, fcff_values=None, label_suffix=""):
+    if fcff_values is None:
+        fcff_values = data["fcff_expense_values"]
+
+    if len(fcff_values) < 2:
+        print(f"{symbol}: Not enough FCFF history.")
+        return
+
+    # CAGR / EWMA blend of historical FCFF growth (#3, #6)
+    base_growth = blended_growth(fcff_values)
+    if base_growth is None:
         print(f"{symbol}: Could not compute a valid growth rate.")
         return
 
